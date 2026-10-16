@@ -1,8 +1,4 @@
-# Azure Landing Zones
-
-## Prerequisites
-
-Azure AD DS Only: there are prerequisites to deploy Azure AD DS in an Azure subscription and are contained in the "preDeployment.ps1" script file.
+# Azure Landing Zone
 
 ## Deployment Options
 
@@ -30,23 +26,16 @@ az deployment sub create \
 
 ## Description
 
-A landing zone is the core infrastructure needed to support a workload in Azure.  Typically this involves your networking and identity.
-
-This solution allows you to choose from 3 identity options:
-
-1. Active Directory Domain Services on Azure IaaS virtual machines
-1. Azure Active Directory Domain Services with a managed domain
-1. Azure Active Directory
+A landing zone is the core infrastructure needed to support a workload in Azure.  Typically this involves your networking and identity. This solution assumes your identities are cloud identities managed by Entra ID and is meant to be a simple, flat network architecture with some core services.
 
 The solution will also deploy the following Azure resources:
 
-+ Virtual Network with subnets
-+ Network Security Groups
++ Virtual Network with Subnets
++ Route Table with Route
++ Private DNS Zones
++ Azure Firewall with Public IP Address & Policy
 + Network Watcher
-+ Bastion
++ Bastion with Public IP Address
 + Key Vault with Secrets
 + Log Analytics Workspace
-
-## Post Deployment
-
-AD DS Only: while most of the infrastructure is deployed using the templates and scripts, Azure AD Connect cannot be automated.  Since this solution is meant for a lab or development, Azure AD Connect can be installed on the IaaS domain controller.  The directions can be found [here](https://learn.microsoft.com/azure/active-directory/hybrid/how-to-connect-install-express).
++ Azure Blobs with Container
