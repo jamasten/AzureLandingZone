@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.48.1.52935",
-      "templateHash": "4258812775656506385"
+      "templateHash": "13931028168080414244"
     }
   },
   "parameters": {
@@ -41,7 +41,7 @@
     "network": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
-      "name": "NetworkingTemplate",
+      "name": "[format('network-{0}', uniqueString('network', deployment().name))]",
       "resourceGroup": "landing-zone",
       "properties": {
         "expressionEvaluationOptions": {
@@ -55,12 +55,13 @@
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
               "version": "0.48.1.52935",
-              "templateHash": "14638112811462634836"
+              "templateHash": "1880953250336025896"
             }
           },
           "parameters": {
@@ -68,15 +69,15 @@
               "type": "string"
             }
           },
-          "resources": [
-            {
+          "resources": {
+            "networkWatcher": {
               "type": "Microsoft.Network/networkWatchers",
               "apiVersion": "2021-02-01",
               "name": "network-watcher",
               "location": "[parameters('location')]",
               "properties": {}
             },
-            {
+            "routeTable": {
               "type": "Microsoft.Network/routeTables",
               "apiVersion": "2025-09-01",
               "name": "route-table",
@@ -85,7 +86,7 @@
                 "disableBgpRoutePropagation": false
               }
             },
-            {
+            "route": {
               "type": "Microsoft.Network/routeTables/routes",
               "apiVersion": "2025-09-01",
               "name": "[format('{0}/{1}', 'route-table', 'firewall')]",
@@ -95,10 +96,10 @@
                 "nextHopIpAddress": "10.0.0.4"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/routeTables', 'route-table')]"
+                "routeTable"
               ]
             },
-            {
+            "virtualNetwork": {
               "type": "Microsoft.Network/virtualNetworks",
               "apiVersion": "2021-02-01",
               "name": "virtual-network",
@@ -130,7 +131,7 @@
                   {
                     "name": "AzureFuctionSubnet",
                     "properties": {
-                      "addressPrefix": "10.0.1.128/26",
+                      "addressPrefix": "10.0.0.128/26",
                       "routeTable": {
                         "id": "[resourceId('Microsoft.Network/routeTables', 'route-table')]"
                       },
@@ -150,7 +151,7 @@
                   {
                     "name": "AzureNetAppFiles",
                     "properties": {
-                      "addressPrefix": "10.0.2.0/24",
+                      "addressPrefix": "10.0.1.0/24",
                       "delegations": [
                         {
                           "name": "Microsoft.Netapp.Volumes",
@@ -166,7 +167,7 @@
                   {
                     "name": "Workload",
                     "properties": {
-                      "addressPrefix": "10.0.0.0/24",
+                      "addressPrefix": "10.0.2.0/24",
                       "serviceEndpoints": [
                         {
                           "service": "Microsoft.KeyVault",
@@ -191,11 +192,11 @@
                 "enableVmProtection": false
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/networkWatchers', 'network-watcher')]",
-                "[resourceId('Microsoft.Network/routeTables', 'route-table')]"
+                "networkWatcher",
+                "routeTable"
               ]
             },
-            {
+            "firewallPIP": {
               "type": "Microsoft.Network/publicIPAddresses",
               "apiVersion": "2020-11-01",
               "name": "firewall-pip",
@@ -209,7 +210,7 @@
                 "idleTimeoutInMinutes": 4
               }
             },
-            {
+            "firewallPolicy": {
               "type": "Microsoft.Network/firewallPolicies",
               "apiVersion": "2025-09-01",
               "name": "firewall-policy",
@@ -221,7 +222,7 @@
                 "threatIntelMode": "Alert"
               }
             },
-            {
+            "ruleCollectionGroup": {
               "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
               "apiVersion": "2025-09-01",
               "name": "[format('{0}/{1}', 'firewall-policy', 'DefaultNetworkRuleCollectionGroup')]",
@@ -260,10 +261,10 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/firewallPolicies', 'firewall-policy')]"
+                "firewallPolicy"
               ]
             },
-            {
+            "firewall": {
               "type": "Microsoft.Network/azureFirewalls",
               "apiVersion": "2025-09-01",
               "name": "firewall",
@@ -296,12 +297,12 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', 'firewall-pip')]",
-                "[resourceId('Microsoft.Network/firewallPolicies', 'firewall-policy')]",
-                "[resourceId('Microsoft.Network/virtualNetworks', 'virtual-network')]"
+                "firewallPIP",
+                "firewallPolicy",
+                "virtualNetwork"
               ]
             },
-            {
+            "bastionPIP": {
               "type": "Microsoft.Network/publicIPAddresses",
               "apiVersion": "2020-11-01",
               "name": "bastion-pip",
@@ -315,7 +316,7 @@
                 "idleTimeoutInMinutes": 4
               }
             },
-            {
+            "bastion": {
               "type": "Microsoft.Network/bastionHosts",
               "apiVersion": "2020-05-01",
               "name": "bastion",
@@ -336,11 +337,143 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', 'bastion-pip')]",
-                "[resourceId('Microsoft.Network/virtualNetworks', 'virtual-network')]"
+                "bastionPIP",
+                "virtualNetwork"
+              ]
+            },
+            "privateDnsZones": {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2025-04-01",
+              "name": "[format('privateDnsZones-{0}', uniqueString('privateDnsZones', deployment().name))]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "virtualNetworkResourceId": {
+                    "value": "[resourceId('Microsoft.Network/virtualNetworks', 'virtual-network')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "languageVersion": "2.0",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.48.1.52935",
+                      "templateHash": "3109207697672025135"
+                    }
+                  },
+                  "parameters": {
+                    "virtualNetworkResourceId": {
+                      "type": "string"
+                    }
+                  },
+                  "variables": {
+                    "cloudSuffix": "[replace(replace(environment().resourceManager, 'https://management.', ''), '/', '')]",
+                    "privateDnsZoneNames": [
+                      "[format('privatelink.{0}', coalesce(variables('privateDnsZoneSuffixes_AzureWebSites')[environment().name], format('appservice.{0}', variables('cloudSuffix'))))]",
+                      "[format('privatelink.wvd.{0}', coalesce(variables('privateDnsZoneSuffixes_AzureVirtualDesktop')[environment().name], variables('cloudSuffix')))]",
+                      "[format('privatelink-global.wvd.{0}', coalesce(variables('privateDnsZoneSuffixes_AzureVirtualDesktop')[environment().name], variables('cloudSuffix')))]",
+                      "[format('privatelink.file.{0}', environment().suffixes.storage)]",
+                      "[format('privatelink.queue.{0}', environment().suffixes.storage)]",
+                      "[format('privatelink.table.{0}', environment().suffixes.storage)]",
+                      "[format('privatelink.blob.{0}', environment().suffixes.storage)]",
+                      "[format('privatelink{0}', replace(environment().suffixes.keyvaultDns, 'vault', 'vaultcore'))]"
+                    ],
+                    "privateDnsZoneSuffixes_AzureVirtualDesktop": {
+                      "AzureCloud": "microsoft.com",
+                      "AzureUSGovernment": "azure.us",
+                      "USNat": null,
+                      "USSec": null
+                    },
+                    "privateDnsZoneSuffixes_AzureWebSites": {
+                      "AzureCloud": "azurewebsites.net",
+                      "AzureUSGovernment": "azurewebsites.us",
+                      "USNat": null,
+                      "USSec": null
+                    }
+                  },
+                  "resources": {
+                    "privateDnsZones": {
+                      "copy": {
+                        "name": "privateDnsZones",
+                        "count": "[length(variables('privateDnsZoneNames'))]"
+                      },
+                      "type": "Microsoft.Network/privateDnsZones",
+                      "apiVersion": "2018-09-01",
+                      "name": "[variables('privateDnsZoneNames')[copyIndex()]]",
+                      "location": "global"
+                    },
+                    "virtualNetworkLinks": {
+                      "type": "Microsoft.Resources/deployments",
+                      "apiVersion": "2025-04-01",
+                      "name": "[format('virtualNetworkLinks-{0}', uniqueString('virtualNetworkLinks', deployment().name))]",
+                      "properties": {
+                        "expressionEvaluationOptions": {
+                          "scope": "inner"
+                        },
+                        "mode": "Incremental",
+                        "parameters": {
+                          "privateDnsZoneNames": {
+                            "value": "[variables('privateDnsZoneNames')]"
+                          },
+                          "virtualNetworkResourceId": {
+                            "value": "[parameters('virtualNetworkResourceId')]"
+                          }
+                        },
+                        "template": {
+                          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                          "contentVersion": "1.0.0.0",
+                          "metadata": {
+                            "_generator": {
+                              "name": "bicep",
+                              "version": "0.48.1.52935",
+                              "templateHash": "9802369445365139917"
+                            }
+                          },
+                          "parameters": {
+                            "privateDnsZoneNames": {
+                              "type": "array"
+                            },
+                            "virtualNetworkResourceId": {
+                              "type": "string"
+                            }
+                          },
+                          "resources": [
+                            {
+                              "copy": {
+                                "name": "virtualNetworkLinks",
+                                "count": "[length(parameters('privateDnsZoneNames'))]"
+                              },
+                              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                              "apiVersion": "2018-09-01",
+                              "name": "[format('{0}/{1}', parameters('privateDnsZoneNames')[copyIndex()], last(split(parameters('virtualNetworkResourceId'), '/')))]",
+                              "location": "global",
+                              "properties": {
+                                "registrationEnabled": false,
+                                "virtualNetwork": {
+                                  "id": "[parameters('virtualNetworkResourceId')]"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "dependsOn": [
+                        "privateDnsZones"
+                      ]
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "virtualNetwork"
               ]
             }
-          ],
+          },
           "outputs": {
             "subnetResourceId": {
               "type": "string",
