@@ -54,7 +54,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: 'AzureFuctionSubnet'
         properties: {
-          addressPrefix: '10.0.1.128/26'
+          addressPrefix: '10.0.0.128/26'
           routeTable: {
             id: routeTable.id
           }
@@ -74,7 +74,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: 'AzureNetAppFiles'
         properties: {
-          addressPrefix: '10.0.2.0/24'
+          addressPrefix: '10.0.1.0/24'
           delegations: [
             {
               name: 'Microsoft.Netapp.Volumes'
@@ -90,7 +90,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: 'Workload'
         properties: {
-          addressPrefix: '10.0.0.0/24'
+          addressPrefix: '10.0.2.0/24'
           serviceEndpoints: [
             {
               service: 'Microsoft.KeyVault'
@@ -245,6 +245,12 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-05-01' = {
         }
       }
     ]
+  }
+}
+
+module privateDnsZones 'privateDnsZones.bicep' = {
+  params: {
+    virtualNetworkResourceId: virtualNetwork.id
   }
 }
 
