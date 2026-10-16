@@ -17,7 +17,6 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' = {
 }
 
 module network './modules/network.bicep' = {
-  name: 'NetworkingTemplate'
   scope: resourceGroup
   params: {
     location: location
