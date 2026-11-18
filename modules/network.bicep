@@ -55,9 +55,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         name: 'AzureFuctionSubnet'
         properties: {
           addressPrefix: '10.0.0.128/26'
-          routeTable: {
-            id: routeTable.id
-          }
           delegations: [
             {
               name: 'Microsoft.Web/serverFarms'
@@ -69,6 +66,9 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
           ]
           privateEndpointNetworkPolicies: 'Disabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
+          routeTable: {
+            id: routeTable.id
+          }
         }
       }
       {
@@ -85,6 +85,9 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
           ]
           privateEndpointNetworkPolicies: 'Enabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
+          routeTable: {
+            id: routeTable.id
+          }
         }
       }
       {
@@ -104,9 +107,18 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
                 '*'
               ]
             }
+            {
+              service: 'Microsoft.Web'
+              locations: [
+                '*'
+              ]
+            }
           ]
           privateEndpointNetworkPolicies: 'Disabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
+          routeTable: {
+            id: routeTable.id
+          }
         }
       }
     ]
@@ -214,7 +226,6 @@ resource firewall 'Microsoft.Network/azureFirewalls@2025-09-01' = {
   }
 }
 
-
 resource bastionPIP 'Microsoft.Network/publicIPAddresses@2020-11-01' = {
   name: 'bastion-pip'
   location: location
@@ -254,4 +265,8 @@ module privateDnsZones 'privateDnsZones.bicep' = {
   }
 }
 
-output subnetResourceId string = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, 'Workload')
+output subnetResourceId string = resourceId(
+  'Microsoft.Network/virtualNetworks/subnets',
+  virtualNetwork.name,
+  'Workload'
+)
