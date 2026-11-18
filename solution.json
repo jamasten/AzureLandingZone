@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.49.2.45890",
-      "templateHash": "2787138491828696619"
+      "templateHash": "1117393715923359826"
     }
   },
   "parameters": {
@@ -529,7 +529,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.49.2.45890",
-              "templateHash": "12955658083592808060"
+              "templateHash": "17244895962941219401"
             }
           },
           "parameters": {
@@ -616,6 +616,30 @@
                 "publicNetworkAccessForIngestion": "Enabled",
                 "publicNetworkAccessForQuery": "Enabled"
               }
+            },
+            {
+              "type": "Microsoft.Insights/privateLinkScopes",
+              "apiVersion": "2023-06-01-preview",
+              "name": "private-link-scope",
+              "location": "global",
+              "properties": {
+                "accessModeSettings": {
+                  "ingestionAccessMode": "Open",
+                  "queryAccessMode": "Open"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/privateLinkScopes/scopedResources",
+              "apiVersion": "2023-06-01-preview",
+              "name": "[format('{0}/{1}', 'private-link-scope', split(resourceId('Microsoft.OperationalInsights/workspaces', 'log-analytics-workspace'), '/')[8])]",
+              "properties": {
+                "linkedResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', 'log-analytics-workspace')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', 'log-analytics-workspace')]",
+                "[resourceId('Microsoft.Insights/privateLinkScopes', 'private-link-scope')]"
+              ]
             },
             {
               "type": "Microsoft.Storage/storageAccounts",
@@ -709,7 +733,7 @@
                 },
                 "shareDeleteRetentionPolicy": {
                   "enabled": false,
-                  "days": 0
+                  "days": 1
                 }
               },
               "dependsOn": [

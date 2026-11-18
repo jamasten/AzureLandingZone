@@ -68,6 +68,25 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-03
   }
 }
 
+resource privateLinkScope 'Microsoft.Insights/privateLinkScopes@2023-06-01-preview' = {
+  name: 'private-link-scope'
+  location: 'global'
+  properties: {
+    accessModeSettings: {
+      ingestionAccessMode: 'Open'
+      queryAccessMode: 'Open'
+    }
+  }
+}
+
+resource scopedResource 'Microsoft.Insights/privateLinkScopes/scopedResources@2023-06-01-preview' = {
+  parent: privateLinkScope
+  name: split(logAnalyticsWorkspace.id, '/')[8]
+  properties: {
+    linkedResourceId: logAnalyticsWorkspace.id
+  }
+}
+
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-06-01' = {
   name: 'storage${uniqueString(subscription().id)}'
   location: location
@@ -155,7 +174,7 @@ resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2026-06-01
     }
     shareDeleteRetentionPolicy: {
       enabled: false
-      days: 0
+      days: 1
     }
   }
 }
